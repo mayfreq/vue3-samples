@@ -7,7 +7,7 @@ export default defineComponent({
 </script>
 
 <template>
-  <h1>Quiz</h1>
+  <h1 class="text-4xl">Quiz</h1>
 </template>
 
 <style>
