@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
+
+.option-default {
+  @apply bg-white text-black;
+}
+.option-correct {
+  @apply bg-green-100 text-green-500;
+}
+.option-correct div:nth-child(1) {
+  @apply inline;
+}
+.option-wrong {
+  @apply bg-red-100 text-red-500;
+}
+
 @tailwind utilities;
