@@ -14,4 +14,8 @@
   @apply bg-red-100 text-red-500;
 }
 
+.disabled {
+  @apply bg-gray-200;
+}
+
 @tailwind utilities;

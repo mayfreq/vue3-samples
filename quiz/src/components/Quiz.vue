@@ -1,57 +1,84 @@
 <script lang="ts">
-import { defineComponent, reactive, ref } from "vue";
+import { defineComponent, onMounted, reactive, ref } from "vue";
+import { get, IQuestion } from "../util/data";
 
 export default defineComponent({
   name: "Quiz",
   components: {},
   setup() {
-    const questions = reactive([
-      {
-        question:
-          "In any programming language, what is the most common way to iterate through an array?",
-        correct_answer: "'For' loops",
-        answers: [
-          "'If' Statements",
-          "'Do-while' loops",
-          "'While' loops",
-          "'For' loops",
-        ],
-      },
-      {
-        question: "What does GHz stand for?",
-        correct_answer: "Gigahertz",
-        answers: ["Gigahotz", "Gigahetz", "Gigahatz", "Gigahertz"],
-      },
-    ]);
+    const btnElement = ref<HTMLElement | null>(null);
+    let questions = reactive([] as IQuestion[]);
     const questionIndex = ref(0);
-    const options = ref([] as any[]);
+    const answers = ref([] as any[]);
+    const score = ref(0);
+    let optionStatus = true;
+
+    onMounted(async () => {
+      await get().then((data) =>
+        data.forEach((item) =>
+          questions.push({
+            question: item.question,
+            correct_answer: item.correct_answer,
+            answers: item.answers,
+          })
+        )
+      );
+    });
 
     const checkAnswer = (answer: string, index: number) => {
-
-      const refItem = options.value[index]
-
-      if (questions[questionIndex.value].correct_answer === answer) {
-        console.log(refItem)
+      if (!optionStatus) return;
+      const refItem = answers.value[index];
+      if (questions[questionIndex.value].correct_answer == answer) {
         refItem.classList.add("option-correct");
         refItem.classList.remove("option-default");
+        score.value += 10;
+        optionStatus = false;
       } else {
         refItem.classList.add("option-wrong");
         refItem.classList.remove("option-default");
+        optionStatus = false;
       }
+
+      answers.value
+        .filter((anwser, i) => i != index)
+        .forEach((answer) => answer.classList.add("disabled"));
     };
 
     const addRefs = (element: any) => {
       if (element) {
-        options.value.push(element);
+        answers.value.push(element);
       }
+    };
+    const nextQuestion = () => {
+      questionIndex.value++;
+      if (questionIndex.value === 9) {
+        if (btnElement.value) {
+          btnElement.value.innerText="Finish"
+        }
+      }
+      clear()
+    };
+
+    const clear = () => {
+      optionStatus = true;
+      answers.value.forEach((item) => {
+        item.classList.remove("option-correct");
+        item.classList.remove("option-wrong");
+        item.classList.remove("disabled");
+        item.classList.add("option-default");
+      });
+      answers.value.length = 0;
     };
 
     return {
       questions,
       questionIndex,
       checkAnswer,
-      options,
+      answers,
       addRefs,
+      nextQuestion,
+      score,
+      btnElement,
     };
   },
 });
@@ -60,6 +87,7 @@ export default defineComponent({
 
 <template>
   <div
+    v-if="questions.length != 0"
     class="
       bg-gray-100
       flex-none
@@ -75,8 +103,8 @@ export default defineComponent({
       <!-- title and score -->
       <span>Quiz App</span>
       <div>
-        <span>Score</span>
-        <span>10</span>
+        <span>Score </span>
+        <span>{{ score   }}</span>
       </div>
     </div>
 
@@ -93,7 +121,7 @@ export default defineComponent({
 
     <!-- quiestion -->
     <div class="mt-7 font-bold">
-      <span>{{ questions[questionIndex].question }}</span>
+      <span v-html="questions[questionIndex].question"></span>
     </div>
 
     <!-- answers -->
@@ -111,11 +139,11 @@ export default defineComponent({
           cursor-pointer
           option-default
         "
-        @click="checkAnswer(item,index)"
+        @click="checkAnswer(item, index)"
         :ref="addRefs"
       >
         <div class="absolute right-8 hidden">+10</div>
-        <span>{{ item }}</span>
+        <span v-html="item"></span>
       </div>
     </div>
 
@@ -124,8 +152,12 @@ export default defineComponent({
 
     <!-- progress state and next question-->
     <div class="mt-8 flex justify-between">
-      <span>1/5 question</span>
-      <button class="bg-blue-600 rounded-lg text-white p-2">
+      <span>{{ questionIndex + 1 }}/10 question</span>
+      <button
+        class="bg-blue-600 rounded-lg text-white p-2"
+        ref="btnElement"
+        @click="nextQuestion"
+      >
         Next Question
       </button>
     </div>
