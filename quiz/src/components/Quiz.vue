@@ -90,7 +90,6 @@ export default defineComponent({
     v-if="questions.length != 0"
     class="
       bg-gray-100
-      flex-none
       container
       relative
       shadow-lg
