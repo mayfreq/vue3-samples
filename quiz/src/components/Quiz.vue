@@ -1,11 +1,11 @@
 <script lang="ts">
-import { defineComponent, onMounted, reactive, ref } from "vue";
+import { defineComponent, onMounted, provide, reactive, ref } from "vue";
 import { get, IQuestion } from "../util/data";
 
 export default defineComponent({
   name: "Quiz",
   components: {},
-  setup() {
+  setup(props, { emit }) {
     const btnElement = ref<HTMLElement | null>(null);
     let questions = reactive([] as IQuestion[]);
     const questionIndex = ref(0);
@@ -14,6 +14,7 @@ export default defineComponent({
     let optionStatus = true;
 
     onMounted(async () => {
+      console.log("asdasd")
       await get().then((data) =>
         data.forEach((item) =>
           questions.push({
@@ -23,6 +24,8 @@ export default defineComponent({
           })
         )
       );
+
+      await countdown();
     });
 
     const checkAnswer = (answer: string, index: number) => {
@@ -53,10 +56,28 @@ export default defineComponent({
       questionIndex.value++;
       if (questionIndex.value === 9) {
         if (btnElement.value) {
-          btnElement.value.innerText="Finish"
+          btnElement.value.innerText = "Finish";
         }
       }
-      clear()
+      clear();
+    };
+
+    const wid = ref(0);
+
+    const countdown = async () => {
+      let val = 0.0;
+      wid.value = 408;
+      const v = 408 / 60;
+      const a = setInterval(() => {
+        val = wid.value - v;
+
+        if (val < 0) {
+          clearInterval(a);
+          wid.value = 0;
+          emit("goResult", score.value)
+        }
+        else wid.value = val;
+      }, 100);
     };
 
     const clear = () => {
@@ -79,6 +100,7 @@ export default defineComponent({
       nextQuestion,
       score,
       btnElement,
+      wid,
     };
   },
 });
@@ -88,31 +110,20 @@ export default defineComponent({
 <template>
   <div
     v-if="questions.length != 0"
-    class="
-      bg-gray-100
-      container
-      relative
-      shadow-lg
-      max-w-md
-      rounded-lg
-      p-5
-    "
+    class="bg-gray-100 container relative shadow-lg max-w-md rounded-lg p-5"
   >
     <div class="flex justify-between">
       <!-- title and score -->
       <span>Quiz App</span>
       <div>
-        <span>Score </span>
-        <span>{{ score   }}</span>
+        <span>Score</span>
+        <span>{{ score }}</span>
       </div>
     </div>
 
     <!-- countdown -->
     <div class="mt-4 h-3 bg-white rounded-full">
-      <div
-        class="bg-blue-700 h-full rounded-full w-full"
-        style="width: 70%"
-      ></div>
+      <div class="bg-blue-700 h-full rounded-full w-full" :style="`width:${wid}px`"></div>
     </div>
 
     <!-- serparator -->
@@ -124,20 +135,9 @@ export default defineComponent({
     </div>
 
     <!-- answers -->
-    <div
-      class="mt-3"
-      v-for="(item, index) in questions[questionIndex].answers"
-      :key="index"
-    >
+    <div class="mt-3" v-for="(item, index) in questions[questionIndex].answers" :key="index">
       <div
-        class="
-          rounded-lg
-          border-2 border-blue-200
-          p-2
-          mb-3
-          cursor-pointer
-          option-default
-        "
+        class="rounded-lg border-2 border-blue-200 p-2 mb-3 cursor-pointer option-default"
         @click="checkAnswer(item, index)"
         :ref="addRefs"
       >
@@ -156,9 +156,7 @@ export default defineComponent({
         class="bg-blue-600 rounded-lg text-white p-2"
         ref="btnElement"
         @click="nextQuestion"
-      >
-        Next Question
-      </button>
+      >Next Question</button>
     </div>
   </div>
 </template>
